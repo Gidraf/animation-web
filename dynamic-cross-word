@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Dynamic Crossword Animator</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --gold: #c9a84c; --gold-l: #e8c96a; 
+    --bg: #0d0e14; --surface: #14161f; --border: #1f2233;
+    --text: #f0ece4; --muted: #6b6e80;
+  }
+  
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--bg);
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    overflow: hidden; 
+  }
+
+  .grid-bg {
+    position: absolute; inset: 0; pointer-events: none;
+    background-image: linear-gradient(rgba(201,168,76,.03) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(201,168,76,.03) 1px, transparent 1px);
+    background-size: 40px 40px; z-index: 0;
+  }
+
+  #header {
+    position: absolute; top: 8%; width: 100%; text-align: center; z-index: 10;
+  }
+  .title-eyebrow {
+    font-size: 0.75rem; font-weight: 700; color: var(--gold);
+    letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 8px;
+  }
+  .title-main {
+    font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 900;
+    background: linear-gradient(135deg, #f0ece4 30%, var(--gold-l));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+
+  /* Crossword Board */
+  #board-wrapper {
+    position: relative; z-index: 20;
+    padding: 20px;
+    background: rgba(20, 22, 31, 0.4);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 16px 50px rgba(0,0,0,0.5);
+    backdrop-filter: blur(10px);
+  }
+
+  #crossword {
+    display: grid;
+    /* Responsive tile sizes */
+    grid-template-columns: repeat(10, min(8vw, 45px));
+    grid-template-rows: repeat(10, min(8vw, 45px));
+    gap: 4px;
+    perspective: 1000px; /* Gives the 3D flip depth */
+  }
+
+  .tile {
+    background: var(--surface);
+    border: 1px solid rgba(255,255,255,0.03);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'DM Sans', sans-serif;
+    font-size: min(4vw, 22px);
+    font-weight: 700;
+    color: var(--muted);
+    opacity: 0.15; /* Inactive tiles stay dim */
+    transition: box-shadow 0.3s ease, border-color 0.3s ease;
+  }
+
+  .tile span {
+    display: block;
+    transform: translateY(1px); /* Optical alignment */
+  }
+
+  .tile.active {
+    background: linear-gradient(135deg, rgba(201,168,76,0.15), rgba(201,168,76,0.05));
+    border-color: var(--gold);
+    color: var(--gold-l);
+    opacity: 1;
+    box-shadow: inset 0 0 10px rgba(201,168,76,0.1), 0 4px 12px rgba(0,0,0,0.3);
+  }
+
+  /* Timing Indicator */
+  #timer-bar {
+    position: absolute; bottom: 0; left: 0;
+    height: 3px; width: 0%;
+    background: linear-gradient(90deg, var(--gold), var(--gold-l));
+    border-radius: 0 0 12px 12px;
+  }
+</style>
+</head>
+<body>
+
+  <div class="grid-bg"></div>
+
+  <div id="header">
+    <div class="title-eyebrow">Connecting the Dots</div>
+    <div class="title-main">Live Intersections</div>
+  </div>
+
+  <div id="board-wrapper">
+    <div id="crossword"></div>
+    <div id="timer-bar"></div>
+  </div>
+
+<script>
+  // --- CONFIGURATION ---
+  const BOARD_SIZE = 10;
+  
+  // Define the frames. Ensure the intersection letter matches in both words!
+  // H = Horizontal, V = Vertical. Row and Col are 0-indexed.
+  const frames = [
+    [
+      { word: "AJIRIWA", dir: "H", row: 4, col: 1 }, 
+      { word: "RESUME",  dir: "V", row: 4, col: 4 }  // Intersects at 'R' (Row 4, Col 4)
+    ],
+    [
+      { word: "CVPAP",   dir: "H", row: 3, col: 3 },
+      { word: "CAREER",  dir: "V", row: 3, col: 3 }  // Intersects at 'C' (Row 3, Col 3)
+    ],
+    [
+      { word: "BLENDER", dir: "H", row: 6, col: 2 },
+      { word: "PYTHON",  dir: "V", row: 1, col: 5 }  // Intersects at 'N' (Row 6, Col 5)
+    ],
+    [
+      { word: "ANIMATE", dir: "H", row: 7, col: 2 },
+      { word: "DESIGN",  dir: "V", row: 2, col: 3 }  // Intersects at 'N' (Row 7, Col 3)
+    ]
+  ];
+  // ---------------------
+
+  const board = document.getElementById('crossword');
+  const tilesMap = {};
+  let currentActiveTiles = [];
+
+  // 1. Build the 10x10 Grid
+  function initBoard() {
+    for (let r = 0; r < BOARD_SIZE; r++) {
+      for (let c = 0; c < BOARD_SIZE; c++) {
+        const tile = document.createElement('div');
+        tile.className = 'tile';
+        const span = document.createElement('span');
+        tile.appendChild(span);
+        board.appendChild(tile);
+        
+        // Store reference for easy coordinate lookups
+        tilesMap[`${r}-${c}`] = { el: tile, span: span };
+      }
+    }
+  }
+
+  // 2. The GSAP Timeline Orchestrator
+  function playSequence(frameIndex) {
+    const tl = gsap.timeline({
+      onComplete: () => {
+        // Loop to the next frame when the timeline finishes
+        playSequence((frameIndex + 1) % frames.length);
+      }
+    });
+
+    // STEP A: Animate Out (If there are active tiles)
+    if (currentActiveTiles.length > 0) {
+      tl.to(currentActiveTiles.map(t => t.el), {
+        rotationX: 90,     // Flip away like a split-flap display
+        opacity: 0.15,
+        duration: 0.3,
+        stagger: 0.02,
+        ease: "power2.in"
+      });
+      
+      // Clean up classes and text mid-timeline
+      tl.add(() => {
+        currentActiveTiles.forEach(t => {
+          t.el.classList.remove('active');
+          t.span.innerText = '';
+          // Reset rotation for inactive state
+          gsap.set(t.el, { rotationX: 0 }); 
+        });
+        currentActiveTiles = [];
+      });
+    }
+
+    // STEP B: Calculate New Tiles
+    tl.add(() => {
+      const frameData = frames[frameIndex];
+      
+      frameData.forEach(wordObj => {
+        for (let i = 0; i < wordObj.word.length; i++) {
+          const r = wordObj.row + (wordObj.dir === 'V' ? i : 0);
+          const c = wordObj.col + (wordObj.dir === 'H' ? i : 0);
+          const tileData = tilesMap[`${r}-${c}`];
+
+          if (tileData) {
+            tileData.span.innerText = wordObj.word[i];
+            
+            // Prevent adding the intersecting letter tile twice
+            if (!currentActiveTiles.includes(tileData)) {
+              currentActiveTiles.push(tileData);
+              tileData.el.classList.add('active');
+            }
+          }
+        }
+      });
+    });
+
+    // STEP C: Animate In
+    // We start them flipped backwards and fade them into place
+    tl.fromTo(() => currentActiveTiles.map(t => t.el), 
+      { rotationX: -90, opacity: 0, scale: 0.8 },
+      { 
+        rotationX: 0, 
+        opacity: 1, 
+        scale: 1, 
+        duration: 0.5, 
+        stagger: 0.04, 
+        ease: "back.out(1.5)" 
+      }
+    );
+
+    // STEP D: Hold for 3 Seconds (Visualized by the progress bar)
+    tl.fromTo('#timer-bar', 
+      { width: '0%' }, 
+      { width: '100%', duration: 3, ease: 'none' }
+    );
+  }
+
+  // Boot up
+  window.addEventListener('load', () => {
+    initBoard();
+    // Start sequence with a slight delay so the user can register the UI
+    setTimeout(() => playSequence(0), 500);
+  });
+</script>
+</body>
+</html>
