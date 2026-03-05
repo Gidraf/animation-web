@@ -90,8 +90,9 @@
   .player-card {
     display: flex; align-items: center; gap: 12px; padding: 8px 16px;
     border-radius: 10px; background: var(--surface); border: 1.5px solid var(--border);
-    transition: all 0.4s ease; opacity: 0.45; width: var(--board-size);
-    position: relative; overflow: hidden;
+    transition: all 0.4s ease; opacity: 0.45;
+    width: var(--board-size); min-width: var(--board-size); max-width: var(--board-size);
+    position: relative; overflow: hidden; flex-shrink: 0;
   }
   .player-card::before {
     content: ''; position: absolute; inset: 0; opacity: 0;
@@ -119,12 +120,16 @@
 
   /* ── Thinking Indicator ── */
   .think-badge {
-    display: none; align-items: center; gap: 6px;
+    display: none; align-items: center; gap: 5px;
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
     background: rgba(255,255,255,0.06); border: 1px solid var(--border2);
-    border-radius: 20px; padding: 4px 10px; font-size: 0.72rem;
-    font-family: 'DM Mono', monospace; letter-spacing: 0.06em;
+    border-radius: 20px; padding: 4px 9px; font-size: 0.68rem;
+    font-family: 'DM Mono', monospace; letter-spacing: 0.04em;
+    pointer-events: none; white-space: nowrap;
   }
   .player-card.thinking .think-badge { display: flex; }
+  /* Reserve space on right so content never shifts */
+  .player-pieces { margin-right: 80px; }
   .think-dots { display: flex; gap: 3px; align-items: center; }
   .think-dot {
     width: 5px; height: 5px; border-radius: 50%;
