@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinite Zen Tetris</title>
+    <style>
+        body { margin: 0; background: #020408; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; font-family: 'Courier New', Courier, monospace; }
+        #game-container { position: relative; border: 4px solid #1a1a2e; border-radius: 8px; box-shadow: 0 0 50px rgba(0, 242, 255, 0.2); }
+        canvas { display: block; background: #050508; }
+        .ui-label { position: absolute; top: -30px; left: 0; width: 100%; text-align: center; color: #00f2ff; font-size: 12px; letter-spacing: 3px; text-transform: uppercase; }
+        #flash { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: white; opacity: 0; pointer-events: none; }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div class="ui-label" id="status">System: Stable</div>
+    <canvas id="t"></canvas>
+    <div id="flash"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script>
+const canvas = document.getElementById('t');
+const ctx = canvas.getContext('2d');
+const status = document.getElementById('status');
+const flash = document.getElementById('flash');
+
+const COLS = 10;
+const ROWS = 20;
+const BLOCK_SIZE = 25;
+
+canvas.width = COLS * BLOCK_SIZE;
+canvas.height = ROWS * BLOCK_SIZE;
+
+let grid = Array.from({length: ROWS}, () => Array(COLS).fill(0));
+let currentPiece = null;
+let isFlushing = false;
+let pieceStep = 0; // Tracks which column we are filling
+
+// We use 2x2 blocks (O-piece) for perfect modularity
+function createPiece() {
+    // Fill the grid from left to right, 2 columns at a time
+    const xPositions = [0, 2, 4, 6, 8];
+    const x = xPositions[pieceStep % xPositions.length];
+    
+    currentPiece = {
+        pos: { x: x, y: -2 },
+        matrix: [[1, 1], [1, 1]],
+        color: `hsl(${(pieceStep * 20) % 360}, 80%, 60%)`
+    };
+    
+    pieceStep++;
+}
+
+function draw() {
+    ctx.fillStyle = '#050508';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Draw Grid Lines (Subtle)
+    ctx.strokeStyle = '#111';
+    for(let i=0; i<=COLS; i++) { ctx.beginPath(); ctx.moveTo(i*BLOCK_SIZE, 0); ctx.lineTo(i*BLOCK_SIZE, canvas.height); ctx.stroke(); }
+    for(let i=0; i<=ROWS; i++) { ctx.beginPath(); ctx.moveTo(0, i*BLOCK_SIZE); ctx.lineTo(canvas.width, i*BLOCK_SIZE); ctx.stroke(); }
+
+    // Draw Stationary Grid
+    grid.forEach((row, y) => {
+        row.forEach((value, x) => {
+            if (value) drawBlock(x, y, value);
+        });
+    });
+
+    // Draw Falling Piece
+    if (currentPiece && !isFlushing) {
+        currentPiece.matrix.forEach((row, y) => {
+            row.forEach((value, x) => {
+                if (value) drawBlock(currentPiece.pos.x + x, currentPiece.pos.y + y, currentPiece.color);
+            });
+        });
+    }
+}
+
+function drawBlock(x, y, color) {
+    if (y < 0) return;
+    ctx.fillStyle = color;
+    ctx.fillRect(x * BLOCK_SIZE + 1, y * BLOCK_SIZE + 1, BLOCK_SIZE - 2, BLOCK_SIZE - 2);
+    // Glow effect
+    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+    ctx.fillRect(x * BLOCK_SIZE + 1, y * BLOCK_SIZE + 1, BLOCK_SIZE - 2, 4);
+}
+
+function update() {
+    if (isFlushing) return;
+
+    currentPiece.pos.y++;
+
+    // Check collision with bottom or other blocks
+    if (collide()) {
+        currentPiece.pos.y--;
+        merge();
+        checkFullBoard();
+        createPiece();
+    }
+}
+
+function collide() {
+    const {pos, matrix} = currentPiece;
+    for (let y = 0; y < matrix.length; y++) {
+        for (let x = 0; x < matrix[y].length; x++) {
+            if (matrix[y][x]) {
+                let newY = pos.y + y;
+                let newX = pos.x + x;
+                if (newY >= ROWS || (newY >= 0 && grid[newY][newX])) return true;
+            }
+        }
+    }
+    return false;
+}
+
+function merge() {
+    currentPiece.matrix.forEach((row, y) => {
+        row.forEach((value, x) => {
+            if (value) {
+                let py = currentPiece.pos.y + y;
+                if (py >= 0) grid[py][currentPiece.pos.x + x] = currentPiece.color;
+            }
+        });
+    });
+}
+
+function checkFullBoard() {
+    // If the top row (row 0 or 1) has any blocks, we are "Full"
+    if (grid[1].some(cell => cell !== 0)) {
+        triggerFlush();
+    }
+}
+
+function triggerFlush() {
+    isFlushing = true;
+    status.innerText = "Status: Reducing...";
+    
+    // Sequence: White Flash -> Clear Grid -> Resume
+    gsap.to(flash, { opacity: 0.8, duration: 0.1, yoyo: true, repeat: 1 });
+    
+    // Use GSAP to "drain" the grid row by row
+    let tl = gsap.timeline({
+        onComplete: () => {
+            grid = Array.from({length: ROWS}, () => Array(COLS).fill(0));
+            isFlushing = false;
+            pieceStep = 0;
+            status.innerText = "Status: Stable";
+        }
+    });
+
+    for (let i = 0; i < ROWS; i++) {
+        tl.to({}, {
+            duration: 0.05,
+            onStart: () => { grid[i] = Array(COLS).fill(0); }
+        });
+    }
+}
+
+let lastTime = 0;
+function loop(time = 0) {
+    const dt = time - lastTime;
+    if (dt > 50) { // High speed drop
+        update();
+        lastTime = time;
+    }
+    draw();
+    requestAnimationFrame(loop);
+}
+
+// Start
+createPiece();
+loop();
+</script>
+</body>
+</html>
