@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Finn & the Rainbow — A Children's Story</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;800&family=Caveat:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --sky-day: #fde9c4;
+    --sky-rain: #b8cfe8;
+    --sky-golden: #ffd180;
+    --grass: #7ec850;
+    --dark-grass: #5aab32;
+    --bark: #8b5e3c;
+    --leaf: #4caf50;
+    --fox-orange: #f4831f;
+    --fox-white: #fff8f0;
+    --bunny-gray: #d5cfc8;
+    --story-bg: #fff9f0;
+    --text-dark: #3a2e2e;
+    --bubble-bg: #fffdf5;
+    --rainbow1: #ff6b6b;
+    --rainbow2: #ffa94d;
+    --rainbow3: #ffe066;
+    --rainbow4: #69db7c;
+    --rainbow5: #74c0fc;
+    --rainbow6: #9775fa;
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+    overflow: hidden;
+    background: #2a1f1f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Baloo 2', cursive;
+  }
+
+  #stage {
+    width: 390px;
+    height: 844px;
+    position: relative;
+    overflow: hidden;
+    background: var(--sky-rain);
+    border-radius: 40px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.5), 0 0 0 6px #2a1f1f, 0 0 0 8px #5a4a3a;
+  }
+
+  /* ─── SKY ─── */
+  #sky {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, #b8cfe8 0%, #d4e8f7 100%);
+    transition: background 1s;
+  }
+  #sky.golden { background: linear-gradient(180deg, #ffe57a 0%, #ffb347 60%, #ff8c69 100%); }
+  #sky.bright { background: linear-gradient(180deg, #87ceeb 0%, #c8ebff 100%); }
+
+  /* ─── CLOUDS ─── */
+  .cloud { position: absolute; opacity: 0.85; }
+  #cloud1 { top: 60px; left: -40px; }
+  #cloud2 { top: 100px; left: 200px; }
+  #cloud3 { top: 30px; left: 120px; }
+
+  /* ─── RAIN ─── */
+  #rain-container {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; overflow: hidden;
+  }
+  .raindrop {
+    position: absolute; top: -20px;
+    width: 2px; height: 14px;
+    background: linear-gradient(to bottom, transparent, #a0c4e8);
+    border-radius: 2px;
+    opacity: 0.7;
+  }
+
+  /* ─── GROUND ─── */
+  #ground {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 280px;
+    background: linear-gradient(180deg, var(--grass) 0%, var(--dark-grass) 100%);
+    border-radius: 0 0 40px 40px;
+  }
+  #ground-path {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 280px;
+  }
+
+  /* ─── TREES ─── */
+  .tree { position: absolute; bottom: 80px; }
+
+  /* ─── FLOWERS ─── */
+  .flower { position: absolute; }
+
+  /* ─── CHARACTERS ─── */
+  #fox { position: absolute; bottom: 100px; left: -120px; }
+  #bunny { position: absolute; bottom: 104px; right: -80px; opacity: 0; }
+  #bird { position: absolute; top: 220px; right: -60px; opacity: 0; }
+
+  /* ─── RAINBOW ─── */
+  #rainbow { position: absolute; top: 80px; left: 50%; transform: translateX(-50%); opacity: 0; }
+
+  /* ─── SUN ─── */
+  #sun { position: absolute; top: 60px; right: -80px; opacity: 0; }
+
+  /* ─── TITLE CARD ─── */
+  #title-card {
+    position: absolute; inset: 0;
+    background: linear-gradient(160deg, #fff9f0 0%, #ffe8c0 100%);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 100; border-radius: 40px;
+  }
+  #title-card h1 {
+    font-size: 2.4rem; font-weight: 800; color: #c0622a;
+    text-align: center; line-height: 1.2;
+    text-shadow: 2px 3px 0 #ffd699;
+    padding: 0 30px;
+  }
+  #title-card .subtitle {
+    font-family: 'Caveat', cursive; font-size: 1.3rem;
+    color: #7c4a2a; margin-top: 12px;
+  }
+  #title-card .tap-hint {
+    position: absolute; bottom: 80px;
+    font-family: 'Caveat', cursive; font-size: 1.1rem;
+    color: #b07040; animation: pulse 1.5s infinite;
+  }
+  .title-fox { margin-bottom: 20px; }
+
+  /* ─── NARRATION BOX ─── */
+  #narration {
+    position: absolute; bottom: 30px; left: 20px; right: 20px;
+    background: rgba(255, 253, 245, 0.96);
+    border: 3px solid #f4a460;
+    border-radius: 20px;
+    padding: 14px 18px;
+    font-size: 1.05rem; color: var(--text-dark);
+    font-weight: 600; line-height: 1.5;
+    box-shadow: 0 6px 20px rgba(200,120,60,0.2);
+    z-index: 50; opacity: 0;
+    min-height: 80px;
+  }
+  #narration.speech {
+    font-family: 'Caveat', cursive;
+    font-size: 1.25rem;
+    background: rgba(255, 248, 220, 0.97);
+    border-color: #ffb347;
+  }
+
+  /* ─── SOUND BUBBLE ─── */
+  .sound-bubble {
+    position: absolute; z-index: 60;
+    background: #fffde7;
+    border: 2.5px solid #ffd54f;
+    border-radius: 50px;
+    padding: 8px 16px;
+    font-family: 'Caveat', cursive;
+    font-size: 1.4rem; font-weight: 700;
+    color: #e65100;
+    opacity: 0;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(255,180,0,0.3);
+  }
+  .sound-bubble::before {
+    content: '';
+    position: absolute; bottom: -12px; left: 20px;
+    border: 8px solid transparent;
+    border-top-color: #ffd54f;
+  }
+  .sound-bubble::after {
+    content: '';
+    position: absolute; bottom: -9px; left: 21px;
+    border: 7px solid transparent;
+    border-top-color: #fffde7;
+  }
+
+  /* ─── SCENE TITLE ─── */
+  #scene-label {
+    position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+    background: rgba(255,255,255,0.88);
+    border-radius: 30px; padding: 6px 20px;
+    font-size: 0.85rem; font-weight: 600; color: #7c4a2a;
+    letter-spacing: 0.05em; z-index: 50; opacity: 0;
+    white-space: nowrap;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+  }
+
+  /* ─── END CARD ─── */
+  #end-card {
+    position: absolute; inset: 0;
+    background: linear-gradient(160deg, #fff9e0 0%, #ffd180 100%);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 100; border-radius: 40px; opacity: 0;
+    pointer-events: none;
+  }
+  #end-card h2 {
+    font-size: 2rem; font-weight: 800; color: #c0622a;
+    text-align: center; text-shadow: 2px 3px 0 #ffe082;
+    padding: 0 30px;
+  }
+  #end-card p {
+    font-family: 'Caveat', cursive; font-size: 1.3rem;
+    color: #7c4a2a; margin-top: 10px; text-align: center;
+    padding: 0 40px;
+  }
+  #end-card .replay-btn {
+    margin-top: 30px; padding: 14px 36px;
+    background: #f4831f; color: white;
+    border: none; border-radius: 50px;
+    font-family: 'Baloo 2', cursive; font-size: 1.1rem; font-weight: 700;
+    cursor: pointer; box-shadow: 0 6px 20px rgba(244,131,31,0.5);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  #end-card .replay-btn:hover { transform: scale(1.05); }
+
+  @keyframes pulse { 0%,100%{opacity:0.5} 50%{opacity:1} }
+  @keyframes leaf-sway { 0%,100%{transform:rotate(-3deg)} 50%{transform:rotate(3deg)} }
+  @keyframes bird-bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+  @keyframes sparkle { 0%,100%{opacity:0;transform:scale(0.3)} 50%{opacity:1;transform:scale(1)} }
+
+  .leaf-sway { animation: leaf-sway 3s ease-in-out infinite; transform-origin: bottom center; }
+  .bird-bob { animation: bird-bob 1s ease-in-out infinite; }
+
+  /* progress bar */
+  #progress-bar {
+    position: absolute; bottom: 0; left: 0; height: 5px;
+    background: linear-gradient(90deg, #f4831f, #ffd54f);
+    border-radius: 0 0 0 40px;
+    z-index: 200; width: 0%;
+    transition: none;
+  }
+
+  /* sparkles */
+  .sparkle {
+    position: absolute; width: 8px; height: 8px;
+    background: #ffd700; border-radius: 50%;
+    animation: sparkle 0.6s ease-in-out infinite;
+  }
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <div id="sky"></div>
+
+  <!-- RAIN -->
+  <div id="rain-container" id="rain"></div>
+
+  <!-- SUN -->
+  <svg id="sun" width="90" height="90" viewBox="0 0 90 90">
+    <circle cx="45" cy="45" r="22" fill="#FFD700"/>
+    <g stroke="#FFD700" stroke-width="4" stroke-linecap="round">
+      <line x1="45" y1="8" x2="45" y2="16"/>
+      <line x1="45" y1="74" x2="45" y2="82"/>
+      <line x1="8" y1="45" x2="16" y2="45"/>
+      <line x1="74" y1="45" x2="82" y2="45"/>
+      <line x1="18" y1="18" x2="24" y2="24"/>
+      <line x1="66" y1="66" x2="72" y2="72"/>
+      <line x1="72" y1="18" x2="66" y2="24"/>
+      <line x1="18" y1="72" x2="24" y2="66"/>
+    </g>
+    <circle cx="45" cy="45" r="22" fill="#FFEC6E" opacity="0.5"/>
+  </svg>
+
+  <!-- RAINBOW -->
+  <svg id="rainbow" width="340" height="160" viewBox="0 0 340 160">
+    <path d="M20,150 Q170,-40 320,150" fill="none" stroke="#9775fa" stroke-width="14" stroke-linecap="round" opacity="0.7"/>
+    <path d="M30,150 Q170,-20 310,150" fill="none" stroke="#74c0fc" stroke-width="13" stroke-linecap="round" opacity="0.8"/>
+    <path d="M42,150 Q170,0 298,150" fill="none" stroke="#69db7c" stroke-width="13" stroke-linecap="round" opacity="0.85"/>
+    <path d="M55,150 Q170,18 285,150" fill="none" stroke="#ffe066" stroke-width="13" stroke-linecap="round" opacity="0.9"/>
+    <path d="M68,150 Q170,34 272,150" fill="none" stroke="#ffa94d" stroke-width="13" stroke-linecap="round" opacity="0.9"/>
+    <path d="M82,150 Q170,50 258,150" fill="none" stroke="#ff6b6b" stroke-width="12" stroke-linecap="round" opacity="0.9"/>
+  </svg>
+
+  <!-- CLOUDS -->
+  <svg id="cloud1" class="cloud" width="130" height="60" viewBox="0 0 130 60">
+    <ellipse cx="50" cy="45" rx="45" ry="22" fill="white" opacity="0.9"/>
+    <ellipse cx="80" cy="42" rx="38" ry="20" fill="white" opacity="0.9"/>
+    <ellipse cx="65" cy="35" rx="28" ry="22" fill="white"/>
+    <ellipse cx="38" cy="38" rx="22" ry="18" fill="white"/>
+  </svg>
+  <svg id="cloud2" class="cloud" width="100" height="50" viewBox="0 0 100 50">
+    <ellipse cx="40" cy="38" rx="36" ry="18" fill="white" opacity="0.85"/>
+    <ellipse cx="62" cy="35" rx="28" ry="16" fill="white" opacity="0.85"/>
+    <ellipse cx="50" cy="28" rx="22" ry="18" fill="white" opacity="0.95"/>
+  </svg>
+  <svg id="cloud3" class="cloud" width="80" height="40" viewBox="0 0 80 40">
+    <ellipse cx="35" cy="30" rx="30" ry="15" fill="#d0dfee" opacity="0.9"/>
+    <ellipse cx="50" cy="27" rx="22" ry="14" fill="#d0dfee" opacity="0.9"/>
+    <ellipse cx="42" cy="22" rx="18" ry="14" fill="#c8d8ec"/>
+  </svg>
+
+  <!-- GROUND -->
+  <svg id="ground-path" viewBox="0 0 390 280" preserveAspectRatio="none">
+    <path d="M0,40 Q60,20 120,38 Q180,55 250,35 Q310,18 390,40 L390,280 L0,280 Z" fill="#7ec850"/>
+    <path d="M0,60 Q60,40 120,58 Q180,75 250,55 Q310,38 390,60 L390,280 L0,280 Z" fill="#6ab840"/>
+    <path d="M0,80 Q80,65 160,80 Q240,95 320,78 L390,82 L390,280 L0,280 Z" fill="#5aab32"/>
+    <!-- path dirt -->
+    <ellipse cx="195" cy="200" rx="90" ry="18" fill="#c8a060" opacity="0.4"/>
+    <rect x="140" y="190" width="110" height="30" rx="10" fill="#c8a060" opacity="0.35"/>
+  </svg>
+
+  <!-- TREES -->
+  <svg class="tree" style="left:10px;" width="70" height="180" viewBox="0 0 70 180">
+    <rect x="28" y="110" width="14" height="70" rx="5" fill="#8b5e3c"/>
+    <ellipse cx="35" cy="90" rx="32" ry="40" fill="#3d9b3f" class="leaf-sway"/>
+    <ellipse cx="35" cy="70" rx="24" ry="32" fill="#4caf50" class="leaf-sway"/>
+    <ellipse cx="35" cy="52" rx="16" ry="24" fill="#66bb6a"/>
+  </svg>
+  <svg class="tree" style="right:5px;" width="60" height="160" viewBox="0 0 60 160">
+    <rect x="24" y="100" width="12" height="60" rx="4" fill="#8b5e3c"/>
+    <ellipse cx="30" cy="80" rx="28" ry="36" fill="#388e3c" class="leaf-sway"/>
+    <ellipse cx="30" cy="62" rx="20" ry="28" fill="#43a047" class="leaf-sway"/>
+    <ellipse cx="30" cy="46" rx="13" ry="20" fill="#66bb6a"/>
+  </svg>
+  <svg class="tree" style="left:80px;" width="44" height="120" viewBox="0 0 44 120">
+    <rect x="18" y="75" width="8" height="45" rx="3" fill="#a0724a"/>
+    <ellipse cx="22" cy="58" rx="20" ry="26" fill="#4a9e4a" class="leaf-sway"/>
+    <ellipse cx="22" cy="44" rx="14" ry="19" fill="#5cb85c"/>
+  </svg>
+  <svg class="tree" style="right:68px;" width="44" height="120" viewBox="0 0 44 120">
+    <rect x="18" y="75" width="8" height="45" rx="3" fill="#a0724a"/>
+    <ellipse cx="22" cy="58" rx="20" ry="26" fill="#2e7d32" class="leaf-sway"/>
+    <ellipse cx="22" cy="44" rx="14" ry="19" fill="#388e3c"/>
+  </svg>
+
+  <!-- FLOWERS -->
+  <svg class="flower" style="bottom:118px;left:160px;" width="24" height="30">
+    <rect x="11" y="10" width="3" height="20" fill="#4caf50"/>
+    <circle cx="12" cy="9" r="6" fill="#ff80ab"/>
+    <circle cx="12" cy="9" r="3" fill="#ffe082"/>
+  </svg>
+  <svg class="flower" style="bottom:122px;left:230px;" width="20" height="26">
+    <rect x="9" y="8" width="2" height="18" fill="#66bb6a"/>
+    <circle cx="10" cy="7" r="5" fill="#b39ddb"/>
+    <circle cx="10" cy="7" r="2.5" fill="#ffe082"/>
+  </svg>
+  <svg class="flower" style="bottom:120px;left:120px;" width="20" height="26">
+    <rect x="9" y="8" width="2" height="18" fill="#66bb6a"/>
+    <circle cx="10" cy="7" r="5" fill="#ffcc02"/>
+    <circle cx="10" cy="7" r="2.5" fill="#fff"/>
+  </svg>
+
+  <!-- BIRD -->
+  <svg id="bird" width="56" height="44" viewBox="0 0 56 44" class="bird-bob">
+    <!-- body -->
+    <ellipse cx="28" cy="26" rx="14" ry="10" fill="#f06292"/>
+    <!-- head -->
+    <circle cx="40" cy="20" r="9" fill="#f48fb1"/>
+    <!-- eye -->
+    <circle cx="43" cy="18" r="2.5" fill="white"/>
+    <circle cx="44" cy="18" r="1.2" fill="#333"/>
+    <!-- beak -->
+    <polygon points="49,20 54,22 49,23" fill="#ffd54f"/>
+    <!-- wing -->
+    <ellipse cx="24" cy="22" rx="10" ry="6" fill="#e91e63" transform="rotate(-20,24,22)"/>
+    <!-- tail -->
+    <ellipse cx="14" cy="27" rx="8" ry="4" fill="#c2185b" transform="rotate(20,14,27)"/>
+    <!-- feet -->
+    <line x1="28" y1="36" x2="26" y2="42" stroke="#ff8f00" stroke-width="2"/>
+    <line x1="33" y1="36" x2="35" y2="42" stroke="#ff8f00" stroke-width="2"/>
+    <line x1="26" y1="42" x2="23" y2="44" stroke="#ff8f00" stroke-width="2"/>
+    <line x1="26" y1="42" x2="28" y2="44" stroke="#ff8f00" stroke-width="2"/>
+    <line x1="35" y1="42" x2="33" y2="44" stroke="#ff8f00" stroke-width="2"/>
+    <line x1="35" y1="42" x2="37" y2="44" stroke="#ff8f00" stroke-width="2"/>
+    <!-- music notes -->
+    <text x="0" y="14" font-size="11" fill="#e91e63" opacity="0.8">♪</text>
+  </svg>
+
+  <!-- BUNNY -->
+  <svg id="bunny" width="64" height="88" viewBox="0 0 64 88">
+    <!-- ears -->
+    <ellipse cx="20" cy="14" rx="7" ry="16" fill="#d5cfc8"/>
+    <ellipse cx="44" cy="14" rx="7" ry="16" fill="#d5cfc8"/>
+    <ellipse cx="20" cy="14" rx="4" ry="12" fill="#f8bbd0"/>
+    <ellipse cx="44" cy="14" rx="4" ry="12" fill="#f8bbd0"/>
+    <!-- body -->
+    <ellipse cx="32" cy="64" rx="20" ry="22" fill="#e8e2db"/>
+    <!-- head -->
+    <circle cx="32" cy="38" r="18" fill="#ede8e2"/>
+    <!-- eyes -->
+    <circle cx="25" cy="35" r="4" fill="white"/>
+    <circle cx="39" cy="35" r="4" fill="white"/>
+    <circle cx="26" cy="35" r="2" fill="#5d4037"/>
+    <circle cx="40" cy="35" r="2" fill="#5d4037"/>
+    <circle cx="27" cy="34" r="0.8" fill="white"/>
+    <circle cx="41" cy="34" r="0.8" fill="white"/>
+    <!-- nose -->
+    <ellipse cx="32" cy="42" rx="3" ry="2" fill="#f48fb1"/>
+    <!-- mouth -->
+    <path d="M29,44 Q32,47 35,44" fill="none" stroke="#bbb" stroke-width="1.5"/>
+    <!-- whiskers -->
+    <line x1="14" y1="41" x2="26" y2="43" stroke="#aaa" stroke-width="1"/>
+    <line x1="14" y1="44" x2="26" y2="44" stroke="#aaa" stroke-width="1"/>
+    <line x1="38" y1="43" x2="50" y2="41" stroke="#aaa" stroke-width="1"/>
+    <line x1="38" y1="44" x2="50" y2="44" stroke="#aaa" stroke-width="1"/>
+    <!-- arms -->
+    <ellipse cx="14" cy="62" rx="5" ry="12" fill="#d5cfc8" transform="rotate(-20,14,62)"/>
+    <ellipse cx="50" cy="62" rx="5" ry="12" fill="#d5cfc8" transform="rotate(20,50,62)"/>
+    <!-- tail -->
+    <circle cx="52" cy="76" r="8" fill="white"/>
+    <!-- feet -->
+    <ellipse cx="22" cy="84" rx="10" ry="6" fill="#d5cfc8"/>
+    <ellipse cx="42" cy="84" rx="10" ry="6" fill="#d5cfc8"/>
+    <!-- belly spot -->
+    <ellipse cx="32" cy="66" rx="10" ry="12" fill="white" opacity="0.6"/>
+  </svg>
+
+  <!-- FOX -->
+  <svg id="fox" width="80" height="110" viewBox="0 0 80 110">
+    <!-- tail -->
+    <ellipse cx="10" cy="82" rx="12" ry="20" fill="#f4831f" transform="rotate(-30,10,82)"/>
+    <ellipse cx="8" cy="88" rx="7" ry="12" fill="#fff8f0" transform="rotate(-30,8,88)"/>
+    <ellipse cx="6" cy="94" rx="4" ry="6" fill="white" transform="rotate(-30,6,94)"/>
+    <!-- body -->
+    <ellipse cx="42" cy="76" rx="22" ry="26" fill="#f4831f"/>
+    <!-- belly -->
+    <ellipse cx="42" cy="80" rx="12" ry="16" fill="#fff3e0"/>
+    <!-- legs walking -->
+    <rect x="28" y="94" width="9" height="20" rx="4" fill="#f4831f" transform="rotate(12,32,94)"/>
+    <rect x="44" y="94" width="9" height="20" rx="4" fill="#f4831f" transform="rotate(-12,48,94)"/>
+    <rect x="30" y="96" width="8" height="16" rx="3" fill="#e0701a" transform="rotate(-8,34,96)"/>
+    <rect x="46" y="96" width="8" height="16" rx="3" fill="#e0701a" transform="rotate(8,50,96)"/>
+    <!-- paws -->
+    <ellipse cx="30" cy="108" rx="6" ry="3.5" fill="#c0601a"/>
+    <ellipse cx="52" cy="108" rx="6" ry="3.5" fill="#c0601a"/>
+    <!-- neck/head -->
+    <ellipse cx="50" cy="52" rx="18" ry="20" fill="#f4831f"/>
+    <!-- face markings -->
+    <ellipse cx="50" cy="58" rx="12" ry="10" fill="#fff3e0"/>
+    <!-- ears -->
+    <polygon points="36,34 30,14 44,30" fill="#f4831f"/>
+    <polygon points="64,34 70,14 56,30" fill="#f4831f"/>
+    <polygon points="37,33 32,18 44,30" fill="#e8603a"/>
+    <polygon points="63,33 68,18 56,30" fill="#e8603a"/>
+    <!-- eyes -->
+    <circle cx="44" cy="50" r="5" fill="white"/>
+    <circle cx="56" cy="50" r="5" fill="white"/>
+    <circle cx="45" cy="50" r="3" fill="#3a2a10"/>
+    <circle cx="57" cy="50" r="3" fill="#3a2a10"/>
+    <circle cx="46" cy="49" r="1" fill="white"/>
+    <circle cx="58" cy="49" r="1" fill="white"/>
+    <!-- nose -->
+    <ellipse cx="50" cy="58" rx="4" ry="2.8" fill="#333"/>
+    <!-- mouth smile -->
+    <path d="M46,61 Q50,65 54,61" fill="none" stroke="#8b4513" stroke-width="1.5"/>
+    <!-- arms -->
+    <ellipse cx="28" cy="72" rx="6" ry="12" fill="#e0701a" transform="rotate(15,28,72)"/>
+    <ellipse cx="64" cy="70" rx="6" ry="12" fill="#e0701a" transform="rotate(-20,64,70)"/>
+  </svg>
+
+  <!-- SOUND BUBBLES -->
+  <div class="sound-bubble" id="sb1" style="top:360px; left:160px;">pitter-patter! 🌧️</div>
+  <div class="sound-bubble" id="sb2" style="top:300px; left:80px;">zzz... 💤</div>
+  <div class="sound-bubble" id="sb3" style="top:320px; left:170px;">drip-drip... 💧</div>
+  <div class="sound-bubble" id="sb4" style="top:280px; left:120px;">rustle rustle~ 🍃</div>
+  <div class="sound-bubble" id="sb5" style="top:260px; right:20px; left:auto;">tweet tweet! 🐦</div>
+  <div class="sound-bubble" id="sb6" style="top:300px; left:100px;">thump thump! 🐰</div>
+  <div class="sound-bubble" id="sb7" style="top:250px; left:50px;">whoooosh~ 🌬️</div>
+  <div class="sound-bubble" id="sb8" style="top:270px; left:130px;">ta-daaaa! ✨</div>
+
+  <!-- NARRATION -->
+  <div id="narration"></div>
+
+  <!-- SCENE LABEL -->
+  <div id="scene-label"></div>
+
+  <!-- END CARD -->
+  <div id="end-card">
+    <svg width="120" height="60" viewBox="0 0 340 160" style="margin-bottom:16px;">
+      <path d="M20,150 Q170,-40 320,150" fill="none" stroke="#9775fa" stroke-width="14" stroke-linecap="round" opacity="0.7"/>
+      <path d="M30,150 Q170,-20 310,150" fill="none" stroke="#74c0fc" stroke-width="13" stroke-linecap="round" opacity="0.8"/>
+      <path d="M42,150 Q170,0 298,150" fill="none" stroke="#69db7c" stroke-width="13" stroke-linecap="round" opacity="0.85"/>
+      <path d="M55,150 Q170,18 285,150" fill="none" stroke="#ffe066" stroke-width="13" stroke-linecap="round" opacity="0.9"/>
+      <path d="M68,150 Q170,34 272,150" fill="none" stroke="#ffa94d" stroke-width="13" stroke-linecap="round" opacity="0.9"/>
+      <path d="M82,150 Q170,50 258,150" fill="none" stroke="#ff6b6b" stroke-width="12" stroke-linecap="round" opacity="0.9"/>
+    </svg>
+    <h2>The End! 🦊</h2>
+    <p>Remember — after every rain, a rainbow is waiting just for you. 🌈</p>
+    <button class="replay-btn" onclick="location.reload()">▶ Watch Again</button>
+  </div>
+
+  <!-- TITLE CARD -->
+  <div id="title-card">
+    <svg class="title-fox" width="100" height="130" viewBox="0 0 80 110">
+      <ellipse cx="10" cy="82" rx="12" ry="20" fill="#f4831f" transform="rotate(-30,10,82)"/>
+      <ellipse cx="8" cy="88" rx="7" ry="12" fill="#fff8f0" transform="rotate(-30,8,88)"/>
+      <ellipse cx="42" cy="76" rx="22" ry="26" fill="#f4831f"/>
+      <ellipse cx="42" cy="80" rx="12" ry="16" fill="#fff3e0"/>
+      <ellipse cx="50" cy="52" rx="18" ry="20" fill="#f4831f"/>
+      <ellipse cx="50" cy="58" rx="12" ry="10" fill="#fff3e0"/>
+      <polygon points="36,34 30,14 44,30" fill="#f4831f"/>
+      <polygon points="64,34 70,14 56,30" fill="#f4831f"/>
+      <circle cx="44" cy="50" r="5" fill="white"/>
+      <circle cx="56" cy="50" r="5" fill="white"/>
+      <circle cx="45" cy="50" r="3" fill="#3a2a10"/>
+      <circle cx="57" cy="50" r="3" fill="#3a2a10"/>
+      <ellipse cx="50" cy="58" rx="4" ry="2.8" fill="#333"/>
+      <path d="M46,62 Q50,67 54,62" fill="none" stroke="#8b4513" stroke-width="1.5"/>
+    </svg>
+    <h1>Finn &amp; the Rainbow</h1>
+    <div class="subtitle">✨ A little story for big hearts ✨</div>
+    <div class="tap-hint">Tap to begin ▶</div>
+  </div>
+
+  <!-- PROGRESS BAR -->
+  <div id="progress-bar"></div>
+</div>
+
+<script>
+// ─── SETUP RAIN ───
+const rainContainer = document.getElementById('rain-container');
+for (let i = 0; i < 35; i++) {
+  const drop = document.createElement('div');
+  drop.className = 'raindrop';
+  drop.style.left = Math.random() * 390 + 'px';
+  drop.style.animationDelay = Math.random() * 2 + 's';
+  rainContainer.appendChild(drop);
+  gsap.set(drop, { y: -20 });
+  gsap.to(drop, {
+    y: 900, duration: 0.6 + Math.random() * 0.6,
+    repeat: -1, delay: Math.random() * 2, ease: 'none'
+  });
+}
+let rainActive = true;
+
+// ─── ELEMENTS ───
+const sky = document.getElementById('sky');
+const narration = document.getElementById('narration');
+const sceneLabel = document.getElementById('scene-label');
+const titleCard = document.getElementById('title-card');
+const endCard = document.getElementById('end-card');
+const fox = document.getElementById('fox');
+const bunny = document.getElementById('bunny');
+const bird = document.getElementById('bird');
+const rainbow = document.getElementById('rainbow');
+const sun = document.getElementById('sun');
+const cloud1 = document.getElementById('cloud1');
+const cloud2 = document.getElementById('cloud2');
+const cloud3 = document.getElementById('cloud3');
+const progressBar = document.getElementById('progress-bar');
+
+// ─── HELPERS ───
+function showNarration(text, isSpeech = false, duration = 4) {
+  return new Promise(resolve => {
+    narration.textContent = text;
+    narration.className = isSpeech ? 'speech' : '';
+    gsap.to(narration, { opacity: 1, y: 0, duration: 0.4 });
+    setTimeout(() => {
+      gsap.to(narration, { opacity: 0, duration: 0.4, onComplete: resolve });
+    }, duration * 1000);
+  });
+}
+
+function showLabel(text, duration = 2.5) {
+  sceneLabel.textContent = text;
+  gsap.to(sceneLabel, { opacity: 1, duration: 0.4 });
+  return new Promise(resolve => {
+    setTimeout(() => {
+      gsap.to(sceneLabel, { opacity: 0, duration: 0.4, onComplete: resolve });
+    }, duration * 1000);
+  });
+}
+
+function showBubble(id, duration = 2) {
+  const el = document.getElementById(id);
+  gsap.fromTo(el, { opacity: 0, scale: 0.6 }, {
+    opacity: 1, scale: 1, duration: 0.35, ease: 'back.out(1.7)'
+  });
+  return new Promise(resolve => {
+    setTimeout(() => {
+      gsap.to(el, { opacity: 0, duration: 0.3, onComplete: resolve });
+    }, duration * 1000);
+  });
+}
+
+function wait(s) {
+  return new Promise(resolve => setTimeout(resolve, s * 1000));
+}
+
+function stopRain() {
+  gsap.to(rainContainer, { opacity: 0, duration: 1.5 });
+  rainActive = false;
+}
+
+// ─── MAIN STORY ───
+async function runStory() {
+  const totalDuration = 95; // seconds
+  gsap.to(progressBar, { width: '100%', duration: totalDuration, ease: 'none' });
+
+  // Initial positions
+  gsap.set(fox, { x: -120, y: 0 });
+  gsap.set(bunny, { x: 0, y: 0, opacity: 0 });
+  gsap.set(bird, { x: 0, y: 0, opacity: 0 });
+  gsap.set(rainbow, { opacity: 0, scale: 0.3, y: 50 });
+  gsap.set(sun, { opacity: 0, x: -80 });
+  gsap.set(narration, { opacity: 0, y: 10 });
+  gsap.set(sceneLabel, { opacity: 0 });
+
+  // Cloud drift
+  gsap.to(cloud1, { x: 30, duration: 8, yoyo: true, repeat: -1, ease: 'sine.inOut' });
+  gsap.to(cloud2, { x: -20, duration: 10, yoyo: true, repeat: -1, ease: 'sine.inOut', delay: 2 });
+  gsap.to(cloud3, { x: 15, duration: 7, yoyo: true, repeat: -1, ease: 'sine.inOut', delay: 1 });
+
+  // ─── SCENE 1: Rainy Morning ───────────────────────────────
+  await showLabel('🌧️  A Rainy Morning');
+  showBubble('sb1', 3.5);
+  await showNarration("It was a very rainy Tuesday morning in Foxwood Forest...", false, 3.5);
+  showBubble('sb3', 2.5);
+  await showNarration("Little Finn the fox was curled up cozy in his den, fast asleep.", false, 3.5);
+  showBubble('sb2', 2.5);
+  await showNarration("He loved the sound of raindrops on the leaves.", false, 3);
+
+  // Fox yawn - entrance
+  gsap.to(fox, { x: 60, duration: 1.2, ease: 'power2.out' }); // peek out
+  await wait(1.5);
+  await showNarration('"Hmm... still raining." Finn peeked out of his door.', true, 3);
+
+  // ─── SCENE 2: Rain Stops ────────────────────────────────
+  await showLabel('☀️  The Sun Comes Out!');
+  await showNarration("Then... the rain began to slow. Drip. Drip. Drip. And then... nothing!", false, 4);
+
+  // Stop rain
+  stopRain();
+  // Sky brightens
+  sky.classList.add('bright');
+  gsap.to(cloud1, { opacity: 0.3, x: 400, duration: 3, ease: 'power1.in' });
+  gsap.to(cloud2, { opacity: 0.2, x: -300, duration: 4, ease: 'power1.in', delay: 0.5 });
+  gsap.to(cloud3, { opacity: 0.15, x: 350, duration: 3.5, ease: 'power1.in', delay: 0.2 });
+
+  // Sun rises
+  await wait(0.5);
+  gsap.to(sun, { opacity: 1, x: 0, duration: 1.5, ease: 'power2.out' });
+  gsap.to(sun, { rotation: 360, duration: 12, repeat: -1, ease: 'none', transformOrigin: '50% 50%' });
+
+  showBubble('sb7', 2.5);
+  await showNarration('"The sun is out!" Finn squealed with joy. He grabbed his little red scarf.', true, 4);
+
+  // Fox walks in
+  gsap.to(fox, {
+    x: 120, duration: 1.8, ease: 'power1.inOut',
+    onUpdate: function() {
+      const progress = this.progress();
+      // walking bob
+      gsap.set(fox, { y: Math.sin(progress * Math.PI * 8) * 5 });
+    }
+  });
+  await wait(2);
+
+  // ─── SCENE 3: Into the Forest ────────────────────────────
+  await showLabel('🌳  A Walk Through the Forest');
+  sky.classList.remove('bright');
+  sky.classList.add('golden');
+
+  await showNarration("Finn walked happily through the glistening forest. Every leaf sparkled with raindrops.", false, 4);
+  showBubble('sb4', 2.5);
+  await showNarration("The whole world smelled like earth and flowers and something magical.", false, 3.5);
+
+  // Fox walking back and forth
+  const foxWalk = gsap.timeline({ repeat: 1 });
+  foxWalk.to(fox, {
+    x: 200, duration: 2.5, ease: 'none',
+    onUpdate: function() {
+      gsap.set(fox, { y: Math.sin(this.progress() * Math.PI * 10) * 4 });
+    }
+  });
+  foxWalk.to(fox, {
+    x: 120, duration: 2, ease: 'none',
+    onUpdate: function() {
+      gsap.set(fox, { scaleX: -1 });
+    },
+    onComplete: () => gsap.set(fox, { scaleX: 1 })
+  });
+  await wait(5);
+
+  // ─── SCENE 4: Meet the Bunny ─────────────────────────────
+  await showLabel('🐰  Finn Meets Bella!');
+
+  // Bunny hops in from right
+  gsap.set(bunny, { x: 0, opacity: 1, right: -80 });
+  gsap.to(bunny, { right: 40, duration: 1.5, ease: 'power2.out' });
+  // Bunny hop
+  const bunnyHop = gsap.timeline({ repeat: 3, yoyo: true });
+  bunnyHop.to(bunny, { y: -18, duration: 0.25, ease: 'power2.out' });
+  bunnyHop.to(bunny, { y: 0, duration: 0.2, ease: 'bounce.out' });
+
+  showBubble('sb6', 2.5);
+  await wait(1.2);
+  await showNarration('"Finn! FINN! Did you see? Did you see?" cried Bella the bunny.', true, 3.5);
+
+  // Fox looks at bunny
+  gsap.to(fox, { x: 160, duration: 0.8 });
+  await showNarration('"See WHAT, Bella?" Finn asked, his fluffy tail wagging.', true, 3.5);
+  await showNarration('"There is something AMAZING over the hill... follow me!" Bella said.', true, 3.5);
+
+  // Bunny hops excitedly
+  const bunnyJump = gsap.timeline({ repeat: 2 });
+  bunnyJump.to(bunny, { y: -22, duration: 0.2, ease: 'power2.out' });
+  bunnyJump.to(bunny, { y: 0, duration: 0.25, ease: 'bounce.out' });
+
+  await wait(1.5);
+
+  // ─── SCENE 5: The Bird Guides Them ───────────────────────
+  await showLabel('🐦  A Feathered Friend');
+
+  // Bird flies in
+  gsap.to(bird, { opacity: 1, x: -60, duration: 1, ease: 'power2.out' });
+  showBubble('sb5', 2.5);
+  await wait(0.8);
+  await showNarration('"Tweet tweet! Hurry, hurry! Follow me!" sang Rosie the little bird.', true, 3.5);
+
+  // Bird flies across sky
+  gsap.to(bird, {
+    x: -350, y: -60, duration: 3, ease: 'power1.inOut',
+    onUpdate: function() {
+      gsap.set(bird, { y: -60 + Math.sin(this.progress() * Math.PI * 4) * 15 });
+    }
+  });
+
+  await wait(1);
+  // Fox and bunny walk together
+  gsap.to(fox, { x: 250, duration: 3, ease: 'power1.inOut',
+    onUpdate: function() {
+      gsap.set(fox, { y: Math.sin(this.progress() * Math.PI * 10) * 4 });
+    }
+  });
+  gsap.to(bunny, { right: 130, duration: 3, ease: 'power1.inOut',
+    onUpdate: function() {
+      gsap.set(bunny, { y: Math.sin(this.progress() * Math.PI * 8) * -5 });
+    }
+  });
+
+  await showNarration("Finn and Bella ran through the tall grass, following Rosie's cheerful song.", false, 4);
+  await wait(1);
+
+  // ─── SCENE 6: The Rainbow Appears! ──────────────────────
+  await showLabel('🌈  The Rainbow!');
+
+  // Dramatic pause
+  await showNarration("They climbed to the top of Mossy Hill and looked up, and there it was...", false, 3.5);
+
+  // Rainbow reveal!
+  gsap.to(rainbow, {
+    opacity: 1, scale: 1, y: 0, duration: 2,
+    ease: 'elastic.out(1, 0.5)'
+  });
+
+  // Sparkles burst
+  for (let i = 0; i < 12; i++) {
+    const spark = document.createElement('div');
+    spark.className = 'sparkle';
+    spark.style.left = (60 + Math.random() * 260) + 'px';
+    spark.style.top = (80 + Math.random() * 180) + 'px';
+    spark.style.animationDelay = (Math.random() * 0.8) + 's';
+    spark.style.width = (6 + Math.random() * 10) + 'px';
+    spark.style.height = spark.style.width;
+    spark.style.background = ['#ffd700', '#ff6b6b', '#74c0fc', '#69db7c', '#ffa94d'][Math.floor(Math.random() * 5)];
+    document.getElementById('stage').appendChild(spark);
+    setTimeout(() => spark.remove(), 4000);
+  }
+
+  showBubble('sb8', 3);
+  await wait(0.5);
+  await showNarration('"A RAINBOW!" they all cheered. "The biggest, most beautiful rainbow in all of Foxwood!"', true, 4.5);
+
+  // Characters jump for joy
+  const joyTl = gsap.timeline({ repeat: 3 });
+  joyTl.to([fox, bunny], { y: -25, duration: 0.25, ease: 'power2.out', stagger: 0.12 });
+  joyTl.to([fox, bunny], { y: 0, duration: 0.3, ease: 'bounce.out', stagger: 0.12 });
+  await wait(3.5);
+
+  // ─── SCENE 7: The Lesson ─────────────────────────────────
+  await showLabel('💛  The Magic of Waiting');
+
+  await showNarration("Finn sat down and looked at the rainbow for a very long time.", false, 3.5);
+  await showNarration('"Bella," he said softly, "I\'m glad it rained this morning."', true, 3.5);
+  await showNarration('"Me too," said Bella, wiggling her nose. "Because now we have THIS."', true, 3.5);
+  await showNarration("And Rosie sang the most beautiful little song as the three friends watched the colors glow.", false, 4);
+  showBubble('sb5', 3);
+  await wait(1);
+
+  // ─── SCENE 8: Sunset Ending ──────────────────────────────
+  sky.classList.remove('golden');
+  sky.classList.add('golden');
+  await wait(0.5);
+
+  await showNarration("That evening, Finn walked home with a warm heart, knowing that after every rain... a rainbow is waiting.", false, 5);
+  await wait(1.5);
+
+  // End card
+  gsap.to(endCard, { opacity: 1, duration: 1.2, ease: 'power2.inOut', pointerEvents: 'auto' });
+}
+
+// ─── START ON TAP ───
+titleCard.addEventListener('click', () => {
+  gsap.to(titleCard, {
+    opacity: 0, scale: 1.05, duration: 0.7, ease: 'power2.in',
+    onComplete: () => { titleCard.style.display = 'none'; runStory(); }
+  });
+});
+
+// Auto-start after 4s if no tap
+setTimeout(() => {
+  if (titleCard.style.display !== 'none') {
+    titleCard.click();
+  }
+}, 4500);
+</script>
+</body>
+</html>
